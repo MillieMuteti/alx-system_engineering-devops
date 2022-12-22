@@ -18,11 +18,6 @@ global
 			        ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
 				        ssl-default-bind-options no-sslv3
 
-        # Custom setup
-	        maxconn 2048
-		        # maximum size of temporary DHE keys that are generated
-			        tune.ssl.default-dh-param 2048
-
 defaults
         log     global
 	        mode    http
@@ -39,30 +34,11 @@ defaults
 												        errorfile 503 /etc/haproxy/errors/503.http
 													        errorfile 504 /etc/haproxy/errors/504.http
 
-        # custom setup
-	        # forwardfor option sets HAProxy to add X-Forwarded-For headers to each request
-		        option forwardfor
-			        # reduces latency between HAProxy and your users by closing connections but maintaining keep-alives
-				        option http-server-close
-
-frontend node-http
-    bind *:80
-        mode http
-	    default_backend web-backend
-
-frontend node-https
-   bind *:443 ssl crt /etc/haproxy/certs/www.jvillegasholbyprojects.tech.pem
-      reqadd X-Forwarded-Proto:\ https
-         acl letsencrypt-acl path_beg /.well-known/acme-challenge/
-	    use_backend letsencrypt-backend if letsencrypt-acl
-	       default_backend web-backend
-
-backend web-backend
-    balance roundrobin
-        option forwardfor
-	    redirect scheme https if !{ ssl_fc }
-	        server 57002-web-01 100.26.218.117 check
-		    server 57002-web-02 54.209.217.194 check
-
-backend letsencrypt-backend
-   server letsencrypt 127.0.0.1:54321
+listen www
+        bind *:80
+	        bind *:443 ssl crt /etc/haproxy/certs/www.arvicrin.tech.pem
+		        http-request redirect scheme https unless { ssl_fc }
+			        balance roundrobin
+				        server 47803-web-01 52.207.58.19 check
+					        server 47803-web-02 54.160.98.70 check
+						
